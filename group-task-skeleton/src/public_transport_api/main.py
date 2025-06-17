@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
-
+from flask_cors import CORS
 import sqlite3
 
 # Path to your local database file
 db_file = 'mydatabase.db'
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 @app.route('/public_transport/city/<city>/closest_departures', methods=['GET'])
 def closest_departures(city):
@@ -50,7 +51,7 @@ def closest_departures(city):
     "departures": [
         {
             "trip_id": "3_14613060",
-            "route_id": "A",
+            "route_id": "BACKEND_A",
             "trip_headsign": "KOSZAROWA (Szpital)",
             "stop": {
                 "name": "Plac Grunwaldzki",
@@ -77,6 +78,20 @@ def closest_departures(city):
             }
         },
         {
+            "trip_id": "3_14613109",
+            "route_id": "BX",
+            "trip_headsign": "Dworzec Główny",
+            "stop": {
+                "name": "Renoma",
+                "coordinates": {
+                    "latitude": 51.1140,
+                    "longitude": 17.0285
+                },
+                "arrival_time": "2025-04-02T08:39:00Z",
+                "departure_time": "2025-04-02T08:40:00Z"
+            }
+        },
+        {
             "trip_id": "3_14613222",
             "route_id": "C",
             "trip_headsign": "Klecina",
@@ -93,7 +108,7 @@ def closest_departures(city):
     ]
 }
 
-    return jsonify({'departures': response})
+    return jsonify(response)
 
 @app.route('/public_transport/city/<city>/trip/<trip_id>', methods=['GET'])
 def trip_details(city, trip_id):
