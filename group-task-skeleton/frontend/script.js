@@ -5,7 +5,7 @@
  * @param {{ lat: number, lon: number }} endPoint - punkt przyjazdu
  */
 async function sendTripData(departureTime, startPoint, endPoint) {
-  const apiUrl = 'https://webhook.site/584cf4fe-34d1-4bae-93e1-c77378359103'; // <- zmień na właściwy endpoint backendu
+  const apiUrl = 'http://localhost:5000/public_transport/city/Wroclaw/closest_departures?start_coordinates=51.1079,17.0385&end_coordinates=51.1141,17.0301&start_time=2025-04-02T08:30:00Z&limit=5'; // <- zmień na właściwy endpoint backendu
 
   const payload = {
     departure_time: departureTime,
