@@ -2,6 +2,41 @@ import sqlite3
 from loguru import logger
 
 import pandas as pd
+import json
+
+# Example DataFrame
+
+
+def stops_list(group):
+    return [
+        {
+            "name": row['stop_name'],
+            "coordinates": {
+                "latitude": row['stop_lat'],
+                "longitude": row['stop_lon']
+            },
+            "arrival_time": row['arrival_time'],
+            "departure_time": row['departure_time']
+        }
+        for _, row in group.iterrows()
+    ]
+
+def departures_json(df):
+    result = []
+    for (trip_id, route_id, trip_headsign), group in df.groupby(
+            ['trip_id', 'route_id', 'trip_headsign']):
+        trip = {
+            "trip_details": {
+                "trip_id": trip_id,
+                "route_id": route_id,
+                "trip_headsign": trip_headsign,
+                "stops": stops_list(group)
+            }
+        }
+        result.append(trip)
+    json_str = json.dumps(result, indent=4, ensure_ascii=False)
+    return json_str
+
 
 def execute_query_from_file(conn, query_file_path, params=None):
     """
@@ -33,9 +68,11 @@ def execute_query_from_file(conn, query_file_path, params=None):
         raise
 
 
+
+
 if __name__ == '__main__':
     db_path = r'C:\Users\kdolata\PycharmProjects\prompt_engineering_group\group-task-skeleton\trips.sqlite'
-    file_path = r'C:\Users\kdolata\PycharmProjects\prompt_engineering_group\group-task-skeleton\sql\select_all_stops.sql'
+    file_path = r'C:\Users\kdolata\PycharmProjects\prompt_engineering_group\group-task-skeleton\sql\select_trip_data.sql'
 
     parameters = {'trip_id': '3_14445093'}
 
@@ -46,3 +83,6 @@ if __name__ == '__main__':
         query_file_path=file_path,
         params=parameters
     )
+
+    json_departures = departures_json(result)
+    print(1)
