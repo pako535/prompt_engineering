@@ -26,33 +26,36 @@ async function sendTripData(departureTime, startPoint, endPoint) {
     // Try to fetch data from the API
     let data;
     try {
-      const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
 
-      if (!response.ok) {
-        throw new Error(`Błąd HTTP: ${response.status}`);
-      }
-
-      data = await response.json();
-      console.log('Odpowiedź z backendu:', data);
-    } catch (fetchError) {
-      console.error('Błąd podczas pobierania danych z API:', fetchError);
-      console.log('Używam danych testowych...');
-      // Fallback to mock data if API call fails
-      data = busData;
+    if (response.status === 200) {
+      const data = await response.json();
+      renderStopsToList(data.trip_details.stops);
+      renderStopsOnMap(data.trip_details.stops);
+      return data;
+    } else if (response.status === 400) {
+      throw new Error('400 Bad Request: Nieprawidłowe dane wejściowe. Sprawdź format i wymagane parametry.');
+    } else if (response.status === 404) {
+      throw new Error('404 Not Found: Podane miasto nie jest obsługiwane.');
+    } else if (response.status === 500) {
+      throw new Error('500 Internal Server Error: Wystąpił błąd po stronie serwera.');
+    } else {
+      throw new Error(`Nieoczekiwany błąd: ${response.status}`);
     }
 
-    // Convert departures to stops format for rendering
-    const stops = data.departures.map(dep => dep.stop);
-    renderStopsToList(stops);
-    renderStopsOnMap(stops);
-
-    return data;
   } catch (error) {
-    console.error('Błąd podczas wysyłania danych:', error);
-    alert('Wystąpił błąd podczas wyszukiwania połączeń.');
+    console.error('Błąd podczas wysyłania danych:', error.message);
+    alert(`Wystąpił błąd: ${error.message}`);
     throw error;
   }
 }
+
 
 function handleTripResponse(response) {
   const { metadata, departures } = response;
