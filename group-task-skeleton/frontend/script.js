@@ -5,7 +5,7 @@
  * @param {{ lat: number, lon: number }} endPoint - punkt przyjazdu
  */
 async function sendTripData(departureTime, startPoint, endPoint) {
-  const apiUrl = 'https://api.twojastrona.pl/trip'; // <- zmień na właściwy endpoint backendu
+  const apiUrl = 'https://webhook.site/584cf4fe-34d1-4bae-93e1-c77378359103'; // <- zmień na właściwy endpoint backendu
 
   const payload = {
     departure_time: departureTime,
