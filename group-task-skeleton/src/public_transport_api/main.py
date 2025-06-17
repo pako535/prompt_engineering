@@ -157,7 +157,6 @@ def trip_details(city, trip_id):
         }
     }
 
-
     return jsonify(json_str)
 
 if __name__ == '__main__':
