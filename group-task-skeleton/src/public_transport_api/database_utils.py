@@ -3,7 +3,7 @@ from loguru import logger
 
 import pandas as pd
 
-def execute_query_from_file(conn, query_file_path):
+def execute_query_from_file(conn, query_file_path, params=None):
     """
     Executes an SQL query from a file using the given SQLite connection
     and returns the result as a pandas DataFrame.
@@ -21,7 +21,7 @@ def execute_query_from_file(conn, query_file_path):
             query = file.read()
 
         # Use pandas to execute the query and return a DataFrame
-        df = pd.read_sql_query(query, conn)
+        df = pd.read_sql_query(query, conn, params=params)
         return df
 
     except FileNotFoundError:
@@ -31,3 +31,18 @@ def execute_query_from_file(conn, query_file_path):
     except sqlite3.Error as e:
         logger.info(f"SQLite error: {e}")
         raise
+
+
+if __name__ == '__main__':
+    db_path = r'C:\Users\kdolata\PycharmProjects\prompt_engineering_group\group-task-skeleton\trips.sqlite'
+    file_path = r'C:\Users\kdolata\PycharmProjects\prompt_engineering_group\group-task-skeleton\sql\select_all_stops.sql'
+
+    parameters = {'trip_id': '3_14445093'}
+
+    connection = sqlite3.connect(db_path)
+
+    result = execute_query_from_file(
+        conn=connection,
+        query_file_path=file_path,
+        params=parameters
+    )
