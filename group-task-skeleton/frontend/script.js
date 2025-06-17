@@ -7,9 +7,9 @@
 async function sendTripData(departureTime, startPoint, endPoint) {
   try {
     // Format coordinates and time for the API call
-    const startCoords = `${startPoint.lat.toFixed(4)},${startPoint.lon.toFixed(4)}`;
-    const endCoords = `${endPoint.lat.toFixed(4)},${endPoint.lon.toFixed(4)}`;
-    
+    const startCoords = `${startPoint.lat.toFixed(5)},${startPoint.lon.toFixed(4)}`;
+    const endCoords = `${endPoint.lat.toFixed(5)},${endPoint.lon.toFixed(4)}`;
+
     // Format the date in ISO format
     let startTime = departureTime;
     if (!startTime.endsWith('Z')) {
@@ -17,21 +17,21 @@ async function sendTripData(departureTime, startPoint, endPoint) {
       const dt = new Date(departureTime);
       startTime = dt.toISOString();
     }
-    
+
     // Build the API URL with query parameters
     const apiUrl = `http://localhost:5000/public_transport/city/Wroclaw/closest_departures?start_coordinates=${startCoords}&end_coordinates=${endCoords}&start_time=${startTime}&limit=5`;
-    
+
     console.log('Calling API:', apiUrl);
-    
+
     // Try to fetch data from the API
     let data;
     try {
       const response = await fetch(apiUrl);
-      
+
       if (!response.ok) {
         throw new Error(`Błąd HTTP: ${response.status}`);
       }
-      
+
       data = await response.json();
       console.log('Odpowiedź z backendu:', data);
     } catch (fetchError) {
@@ -91,17 +91,17 @@ function renderStopsToList(stops) {
 function renderStopsOnMap(stops) {
   // Get the existing map instance from the global RouteMap instance
   const mapInstance = window.routeMapInstance;
-  
+
   if (!mapInstance || !mapInstance.map) {
     console.error('Map not initialized');
     return;
   }
-  
+
   const map = mapInstance.map;
-  
+
   // Clear existing bus stop markers
   mapInstance.clearBusStops();
-  
+
   // Create a bus icon using the image
   const busIcon = L.icon({
     iconUrl: 'image/bus_stop_icon.png',
@@ -109,11 +109,11 @@ function renderStopsOnMap(stops) {
     iconAnchor: [16, 16],
     popupAnchor: [0, -16]
   });
-  
+
   // Add markers for each bus stop
   stops.forEach(stop => {
     const { latitude, longitude } = stop.coordinates;
-    
+
     const marker = L.marker([latitude, longitude], { icon: busIcon })
       .addTo(map)
       .bindPopup(`
@@ -121,30 +121,30 @@ function renderStopsOnMap(stops) {
         Przyjazd: ${new Date(stop.arrival_time).toLocaleTimeString()}<br>
         Odjazd: ${new Date(stop.departure_time).toLocaleTimeString()}
       `);
-    
+
     mapInstance.busStopMarkers.push(marker);
   });
-  
+
   // Draw route line
   const latlngs = stops.map(stop => [stop.coordinates.latitude, stop.coordinates.longitude]);
-  
+
   // Clear existing route lines
   mapInstance.clearRouteLines();
-  
+
   // Add new route line
-  const line = L.polyline(latlngs, { 
+  const line = L.polyline(latlngs, {
     color: '#e74c3c',
     weight: 4,
     opacity: 0.8
   }).addTo(map);
-  
+
   mapInstance.routeLines.push(line);
-  
+
   // Adjust map view to include all markers
   const allMarkers = [...mapInstance.busStopMarkers];
   if (mapInstance.startMarker) allMarkers.push(mapInstance.startMarker);
   if (mapInstance.endMarker) allMarkers.push(mapInstance.endMarker);
-  
+
   if (allMarkers.length > 0) {
     const group = new L.featureGroup(allMarkers);
     map.fitBounds(group.getBounds().pad(0.5));
@@ -159,13 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sendBtn) {
       sendBtn.addEventListener('click', () => {
         const mapInstance = window.routeMapInstance;
-        
+
         // Check if start and end points are selected
         if (!mapInstance || !mapInstance.startMarker || !mapInstance.endMarker) {
           alert('Nie wybrano punktu startowego i końcowego');
           return;
         }
-        
+
         // Get coordinates directly from markers for more accuracy
         const startPos = mapInstance.startMarker.getLatLng();
         const endPos = mapInstance.endMarker.getLatLng();
