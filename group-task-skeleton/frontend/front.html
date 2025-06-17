@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wybór punktów z edycją na mapie</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+  <style>
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+    #coordsPanel {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 300px;
+      z-index: 1000;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <h2 class="m-3">Wybierz i edytuj punkty startowy i końcowy</h2>
+  <div id="map"></div>
+
+  <div id="coordsPanel" class="shadow">
+    <form>
+      <div class="mb-3">
+        <label for="startLat" class="form-label">Start - Szerokość (lat)</label>
+        <input type="number" step="0.00001" class="form-control" id="startLat" placeholder="np. 51.10788" />
+      </div>
+      <div class="mb-3">
+        <label for="startLng" class="form-label">Start - Długość (lon)</label>
+        <input type="number" step="0.00001" class="form-control" id="startLng" placeholder="np. 17.03853" />
+      </div>
+      <div class="mb-3">
+        <label for="startTime" class="form-label">Czas rozpoczęcia podróży</label>
+        <input type="datetime-local" class="form-control" id="startTime" />
+      </div>
+      <hr />
+      <div class="mb-3">
+        <label for="endLat" class="form-label">Koniec - Szerokość (lat)</label>
+        <input type="number" step="0.00001" class="form-control" id="endLat" placeholder="np. 51.11000" />
+      </div>
+      <div class="mb-3">
+        <label for="endLng" class="form-label">Koniec - Długość (lon)</label>
+        <input type="number" step="0.00001" class="form-control" id="endLng" placeholder="np. 17.04000" />
+      </div>
+      <button type="button" id="clearBtn" class="btn btn-danger w-100">Wyczyść punkty</button>
+    </form>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  ></script>
+  <script src="js/routeMap.js"></script>
+</body>
+</html>
