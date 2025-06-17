@@ -37,15 +37,16 @@ def closest_departures(city):
     except Exception:
         return jsonify({'error': 'Invalid start_time format. Use ISO8601 format.'}), 400
 
+    # Create a response with the actual request parameters
     response = {
     "metadata": {
-        "self": "/public_transport/city/Wroclaw/closest_departures?start_coordinates=51.1079,17.0385&amp;end_coordinates=51.1141,17.0301&amp;start_time=2025-04-02T08:30:00Z&amp;limit=3",
-        "city": "Wroclaw",
+        "self": f"/public_transport/city/{city}/closest_departures?start_coordinates={start_coordinates}&end_coordinates={end_coordinates}&start_time={start_time}&limit={limit}",
+        "city": city,
         "query_parameters": {
-            "start_coordinates": "51.1079,17.0385",
-            "end_coordinates": "51.1141,17.0301",
-            "start_time": "2025-04-02T08:30:00Z",
-            "limit": 3
+            "start_coordinates": start_coordinates,
+            "end_coordinates": end_coordinates,
+            "start_time": start_time,
+            "limit": limit
         }
     },
     "departures": [
