@@ -6,9 +6,9 @@
  */
 async function sendTripData(departureTime, startPoint, endPoint) {
   try {
-    // Format coordinates and time for the API call
-    const startCoords = `${startPoint.lat.toFixed(5)},${startPoint.lon.toFixed(4)}`;
-    const endCoords = `${endPoint.lat.toFixed(5)},${endPoint.lon.toFixed(4)}`;
+    // Format coordinates and time for the API call - use full precision
+    const startCoords = `${startPoint.lat},${startPoint.lon}`;
+    const endCoords = `${endPoint.lat},${endPoint.lon}`;
 
     // Format the date in ISO format
     let startTime = departureTime;
@@ -26,36 +26,33 @@ async function sendTripData(departureTime, startPoint, endPoint) {
     // Try to fetch data from the API
     let data;
     try {
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (response.status === 200) {
-      const data = await response.json();
-      renderStopsToList(data.trip_details.stops);
-      renderStopsOnMap(data.trip_details.stops);
-      return data;
-    } else if (response.status === 400) {
-      throw new Error('400 Bad Request: Nieprawidłowe dane wejściowe. Sprawdź format i wymagane parametry.');
-    } else if (response.status === 404) {
-      throw new Error('404 Not Found: Podane miasto nie jest obsługiwane.');
-    } else if (response.status === 500) {
-      throw new Error('500 Internal Server Error: Wystąpił błąd po stronie serwera.');
-    } else {
-      throw new Error(`Nieoczekiwany błąd: ${response.status}`);
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+      
+      data = await response.json();
+      console.log('Odpowiedź z backendu:', data);
+    } catch (fetchError) {
+      console.error('Błąd podczas pobierania danych z API:', fetchError);
+      console.log('Używam danych testowych...');
+      // Fallback to mock data if API call fails
+      data = busData;
     }
 
+    // Convert departures to stops format for rendering
+    const stops = data.departures.map(dep => dep.stop);
+    renderStopsToList(stops);
+    renderStopsOnMap(stops);
+
+    return data;
   } catch (error) {
-    console.error('Błąd podczas wysyłania danych:', error.message);
-    alert(`Wystąpił błąd: ${error.message}`);
+    console.error('Błąd podczas wysyłania danych:', error);
+    alert('Wystąpił błąd podczas wyszukiwania połączeń.');
     throw error;
   }
 }
-
 
 function handleTripResponse(response) {
   const { metadata, departures } = response;
