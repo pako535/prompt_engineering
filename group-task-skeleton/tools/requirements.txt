@@ -4,4 +4,4 @@ langchain-core~=0.3.61
 protobuf~=6.31.0
 langchain-google-genai~=2.1.4
 pillow~=11.2.1
-pandas
+pandas~=2.3.0
