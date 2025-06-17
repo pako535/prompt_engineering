@@ -1,23 +1,140 @@
-from flask import Flask
+from flask import Flask, request, jsonify
+from datetime import datetime
 from flask_cors import CORS
+import sqlite3
 
-
-from controllers.departures_controller import departures_bp
-from controllers.trips_controller import trips_bp
-
+# Path to your local database file
+db_file = 'mydatabase.db'
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
-CORS(app)
+@app.route('/public_transport/city/<city>/closest_departures', methods=['GET'])
+def closest_departures(city):
+    start_coordinates = request.args.get('start_coordinates')
+    end_coordinates = request.args.get('end_coordinates')
+    start_time = request.args.get('start_time')
+    limit = request.args.get('limit', default=5, type=int)
 
+    missing = []
+    if not start_coordinates:
+        missing.append('start_coordinates')
+    if not end_coordinates:
+        missing.append('end_coordinates')
+    if not start_time:
+        missing.append('start_time')
+    if missing:
+        return jsonify({'error': f'Missing required parameters: {", ".join(missing)}'}), 400
 
-app.register_blueprint(departures_bp)
-app.register_blueprint(trips_bp)
+    try:
+        start_lat, start_lon = map(float, start_coordinates.split(','))
+        end_lat, end_lon = map(float, end_coordinates.split(','))
+    except Exception:
+        return jsonify({'error': 'Invalid coordinates format. Use lat,lon.'}), 400
 
+    try:
+        start_time_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+    except Exception:
+        return jsonify({'error': 'Invalid start_time format. Use ISO8601 format.'}), 400
 
-@app.route("/")
-def index():
-    return "Welcome to the Public Transport API for Wrocław!"
+    response = {
+    "metadata": {
+        "self": "/public_transport/city/Wroclaw/closest_departures?start_coordinates=51.1079,17.0385&amp;end_coordinates=51.1141,17.0301&amp;start_time=2025-04-02T08:30:00Z&amp;limit=3",
+        "city": "Wroclaw",
+        "query_parameters": {
+            "start_coordinates": "51.1079,17.0385",
+            "end_coordinates": "51.1141,17.0301",
+            "start_time": "2025-04-02T08:30:00Z",
+            "limit": 3
+        }
+    },
+    "departures": [
+        {
+            "trip_id": "3_14613060",
+            "route_id": "BACKEND_A",
+            "trip_headsign": "KOSZAROWA (Szpital)",
+            "stop": {
+                "name": "Plac Grunwaldzki",
+                "coordinates": {
+                    "latitude": 51.1092,
+                    "longitude": 17.0415
+                },
+                "arrival_time": "2025-04-02T08:34:00Z",
+                "departure_time": "2025-04-02T08:35:00Z"
+            }
+        },
+        {
+            "trip_id": "3_14613109",
+            "route_id": "B",
+            "trip_headsign": "Dworzec Główny",
+            "stop": {
+                "name": "Renoma",
+                "coordinates": {
+                    "latitude": 51.1040,
+                    "longitude": 17.0280
+                },
+                "arrival_time": "2025-04-02T08:39:00Z",
+                "departure_time": "2025-04-02T08:40:00Z"
+            }
+        },
+        {
+            "trip_id": "3_14613109",
+            "route_id": "BX",
+            "trip_headsign": "Dworzec Główny",
+            "stop": {
+                "name": "Renoma",
+                "coordinates": {
+                    "latitude": 51.1140,
+                    "longitude": 17.0285
+                },
+                "arrival_time": "2025-04-02T08:39:00Z",
+                "departure_time": "2025-04-02T08:40:00Z"
+            }
+        },
+        {
+            "trip_id": "3_14613222",
+            "route_id": "C",
+            "trip_headsign": "Klecina",
+            "stop": {
+                "name": "Dominikański",
+                "coordinates": {
+                    "latitude": 51.1099,
+                    "longitude": 17.0335
+                },
+                "arrival_time": "2025-04-02T08:44:00Z",
+                "departure_time": "2025-04-02T08:45:00Z"
+            }
+        }
+    ]
+}
 
-if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    return jsonify(response)
+
+@app.route('/public_transport/city/<city>/trip/<trip_id>', methods=['GET'])
+def trip_details(city, trip_id):
+    conn = sqlite3.connect(db_file)
+    cur = conn.cursor()
+    cur.execute(f"select trip_id, route_id, trip_headsign from trips.trips where trip_id={trip_id}")
+
+    response = {
+        "metadata": {
+            "self": f"/public_transport/city/city/trip/{trip_id}",
+            "city": city,
+            "query_parameters": {
+                "trip_id": "3_14613060"
+            }
+    }
+    }
+
+    trip = {
+        'trip_id': trip_id,
+        'city': city,
+        'route_id': 'Example route',
+        'departure_time': '2025-04-02T08:30:00Z',
+        'arrival_time': '2025-04-02T09:00:00Z',
+        'status': 'scheduled'
+    }
+    return jsonify({'trip': trip})
+
+if __name__ == '__main__':
+    app.run(debug=True)
