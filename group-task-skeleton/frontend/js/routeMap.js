@@ -6,6 +6,8 @@ class RouteMap {
     this.endMarker = null;
     this.routeLine = null;
     this.clickCount = 0;
+    this.busStopMarkers = [];
+    this.routeLines = [];
 
     // Inicjalizacja mapy
     this.initMap();
@@ -29,6 +31,7 @@ class RouteMap {
     this.endLatInput = document.getElementById('endLat');
     this.endLngInput = document.getElementById('endLng');
     this.clearBtn = document.getElementById('clearBtn');
+    this.testRouteBtn = document.getElementById('testRouteBtn');
     
     // Set default start time to current time
     const now = new Date();
@@ -51,6 +54,9 @@ class RouteMap {
 
     // Obsługa przycisku czyszczenia
     this.clearBtn.addEventListener('click', () => this.clearAll());
+    
+    // Obsługa przycisku testowej trasy
+    this.testRouteBtn.addEventListener('click', () => this.showTestRoute());
   }
 
   handleMapClick(e) {
@@ -181,6 +187,10 @@ class RouteMap {
       this.map.removeLayer(this.routeLine);
       this.routeLine = null;
     }
+    
+    // Clear bus stop markers and route lines
+    this.clearBusStops();
+    this.clearRouteLines();
 
     [this.startLatInput, this.startLngInput, this.endLatInput, this.endLngInput]
       .forEach(input => input.value = '');
@@ -194,9 +204,101 @@ class RouteMap {
 
     this.clickCount = 0;
   }
+  
+  clearBusStops() {
+    this.busStopMarkers.forEach(marker => this.map.removeLayer(marker));
+    this.busStopMarkers = [];
+  }
+  
+  clearRouteLines() {
+    this.routeLines.forEach(line => this.map.removeLayer(line));
+    this.routeLines = [];
+  }
+  
+  drawRouteLine(data) {
+    // Clear existing route lines
+    this.clearRouteLines();
+    
+    // Extract bus stop coordinates in the order they appear in the data
+    const busStopCoords = data.departures.map(departure => {
+      const { latitude, longitude } = departure.stop.coordinates;
+      return [latitude, longitude];
+    });
+    
+    // Draw a single polyline connecting all bus stops
+    if (busStopCoords.length > 1) {
+      const line = L.polyline(busStopCoords, { 
+        color: '#e74c3c',
+        weight: 4,
+        opacity: 0.8
+      }).addTo(this.map);
+      
+      this.routeLines.push(line);
+    }
+  }
+  
+  showTestRoute() {
+    // Set example coordinates from the JSON data
+    const startCoords = busData.metadata.query_parameters.start_coordinates.split(',');
+    const endCoords = busData.metadata.query_parameters.end_coordinates.split(',');
+    
+    // Set start time from the JSON data
+    const startTime = busData.metadata.query_parameters.start_time;
+    const localStartTime = new Date(startTime);
+    this.startTimeInput.value = localStartTime.toISOString().slice(0, 16);
+    
+    // Update markers
+    this.updateStartMarker(parseFloat(startCoords[0]), parseFloat(startCoords[1]));
+    this.updateEndMarker(parseFloat(endCoords[0]), parseFloat(endCoords[1]));
+    
+    // Render bus stops
+    this.renderBusStops(busData);
+    
+    // Draw route line between all stops
+    this.drawRouteLine(busData);
+  }
+  
+  renderBusStops(data) {
+    // Clear existing bus stop markers
+    this.clearBusStops();
+    
+    // Create a bus icon using the image
+    const busIcon = L.icon({
+      iconUrl: 'image/bus_stop_icon.png',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -16]
+    });
+    
+    // Add markers for each bus stop
+    data.departures.forEach(departure => {
+      const { latitude, longitude } = departure.stop.coordinates;
+      
+      const marker = L.marker([latitude, longitude], { icon: busIcon })
+        .addTo(this.map)
+        .bindPopup(`
+          <b>${departure.stop.name}</b><br>
+          Linia: ${departure.route_id}<br>
+          Kierunek: ${departure.trip_headsign}<br>
+          Odjazd: ${new Date(departure.stop.departure_time).toLocaleTimeString()}
+        `);
+      
+      this.busStopMarkers.push(marker);
+    });
+    
+    // Adjust map view to include all markers
+    const allMarkers = [...this.busStopMarkers];
+    if (this.startMarker) allMarkers.push(this.startMarker);
+    if (this.endMarker) allMarkers.push(this.endMarker);
+    
+    if (allMarkers.length > 0) {
+      const group = new L.featureGroup(allMarkers);
+      this.map.fitBounds(group.getBounds().pad(0.5));
+    }
+  }
 }
 
 // Inicjalizacja aplikacji po załadowaniu strony
 document.addEventListener('DOMContentLoaded', () => {
-  new RouteMap();
+  const routeMap = new RouteMap();
 });
