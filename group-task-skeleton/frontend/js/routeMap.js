@@ -300,5 +300,6 @@ class RouteMap {
 
 // Inicjalizacja aplikacji po załadowaniu strony
 document.addEventListener('DOMContentLoaded', () => {
-  const routeMap = new RouteMap();
+  // Store the RouteMap instance globally so it can be accessed from other scripts
+  window.routeMapInstance = new RouteMap();
 });
