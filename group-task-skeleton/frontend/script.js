@@ -5,83 +5,41 @@
  * @param {{ lat: number, lon: number }} endPoint - punkt przyjazdu
  */
 async function sendTripData(departureTime, startPoint, endPoint) {
-  const apiUrl = 'http://localhost:5000/public_transport/city/Wroclaw/closest_departures?start_coordinates=51.1079,17.0385&end_coordinates=51.1141,17.0301&start_time=2025-04-02T08:30:00Z&limit=5'; // <- zmień na właściwy endpoint backendu
-  const mockResponse = {
-    "metadata": {
-      "self": "/public_transport/city/Wroclaw/closest_departures?start_coordinates=51.1090,17.0410&amp;end_coordinates=51.1045,17.0285&amp;start_time=2025-04-02T08:30:00Z&amp;limit=3",
-      "city": "Wroclaw",
-      "query_parameters": {
-        "start_coordinates": "51.1090,17.0410",
-        "end_coordinates": "51.1045,17.0285",
-        "start_time": "2025-04-02T08:30:00Z",
-        "limit": 3
-      }
-    },
-    "departures": [
-      {
-        "trip_id": "3_14613060",
-        "route_id": "A",
-        "trip_headsign": "KOSZAROWA (Szpital)",
-        "stop": {
-          "name": "Plac Grunwaldzki",
-          "coordinates": {
-            "latitude": 51.1092,
-            "longitude": 17.0415
-          },
-          "arrival_time": "2025-04-02T08:34:00Z",
-          "departure_time": "2025-04-02T08:35:00Z"
-        }
-      },
-      {
-        "trip_id": "3_14613109",
-        "route_id": "B",
-        "trip_headsign": "Dworzec Główny",
-        "stop": {
-          "name": "Renoma",
-          "coordinates": {
-            "latitude": 51.1040,
-            "longitude": 17.0280
-          },
-          "arrival_time": "2025-04-02T08:39:00Z",
-          "departure_time": "2025-04-02T08:40:00Z"
-        }
-      },
-      {
-        "trip_id": "3_14613222",
-        "route_id": "C",
-        "trip_headsign": "Klecina",
-        "stop": {
-          "name": "Dominikański",
-          "coordinates": {
-            "latitude": 51.1099,
-            "longitude": 17.0335
-          },
-          "arrival_time": "2025-04-02T08:44:00Z",
-          "departure_time": "2025-04-02T08:45:00Z"
-        }
-      }
-    ]
-  };
-
   try {
-    // For now, use mockResponse instead of actual API call
-    // const response = await fetch(apiUrl, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify(payload)
-    // });
-
-    // if (!response.ok) {
-    //   throw new Error(`Błąd HTTP: ${response.status}`);
-    // }
-
-    // const data = await response.json();
-
-    // Use mock data for now
-    const data = mockResponse;
-    console.log('Odpowiedź z backendu:', data);
+    // Format coordinates and time for the API call
+    const startCoords = `${startPoint.lat.toFixed(4)},${startPoint.lon.toFixed(4)}`;
+    const endCoords = `${endPoint.lat.toFixed(4)},${endPoint.lon.toFixed(4)}`;
+    
+    // Format the date in ISO format
+    let startTime = departureTime;
+    if (!startTime.endsWith('Z')) {
+      // Convert local time to UTC ISO string
+      const dt = new Date(departureTime);
+      startTime = dt.toISOString();
+    }
+    
+    // Build the API URL with query parameters
+    const apiUrl = `http://localhost:5000/public_transport/city/Wroclaw/closest_departures?start_coordinates=${startCoords}&end_coordinates=${endCoords}&start_time=${startTime}&limit=5`;
+    
+    console.log('Calling API:', apiUrl);
+    
+    // Try to fetch data from the API
+    let data;
+    try {
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        throw new Error(`Błąd HTTP: ${response.status}`);
+      }
+      
+      data = await response.json();
+      console.log('Odpowiedź z backendu:', data);
+    } catch (fetchError) {
+      console.error('Błąd podczas pobierania danych z API:', fetchError);
+      console.log('Używam danych testowych...');
+      // Fallback to mock data if API call fails
+      data = busData;
+    }
 
     // Convert departures to stops format for rendering
     const stops = data.departures.map(dep => dep.stop);
@@ -91,6 +49,7 @@ async function sendTripData(departureTime, startPoint, endPoint) {
     return data;
   } catch (error) {
     console.error('Błąd podczas wysyłania danych:', error);
+    alert('Wystąpił błąd podczas wyszukiwania połączeń.');
     throw error;
   }
 }
@@ -207,19 +166,18 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         
-        const startLat = parseFloat(document.getElementById('startLat').value);
-        const startLng = parseFloat(document.getElementById('startLng').value);
-        const endLat = parseFloat(document.getElementById('endLat').value);
-        const endLng = parseFloat(document.getElementById('endLng').value);
+        // Get coordinates directly from markers for more accuracy
+        const startPos = mapInstance.startMarker.getLatLng();
+        const endPos = mapInstance.endMarker.getLatLng();
         const departureTime = document.getElementById('startTime').value;
 
-        if (isNaN(startLat) || isNaN(startLng) || isNaN(endLat) || isNaN(endLng) || !departureTime) {
-          alert('Uzupełnij wszystkie pola poprawnie.');
+        if (!departureTime) {
+          alert('Wybierz czas rozpoczęcia podróży.');
           return;
         }
 
-        const startPoint = { lat: startLat, lon: startLng };
-        const endPoint = { lat: endLat, lon: endLng };
+        const startPoint = { lat: startPos.lat, lon: startPos.lng };
+        const endPoint = { lat: endPos.lat, lon: endPos.lng };
 
         sendTripData(departureTime, startPoint, endPoint);
       });
