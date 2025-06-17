@@ -99,27 +99,24 @@ def closest_departures(city):
 def trip_details(city, trip_id):
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
-    cur.execute(f"select trip_id, route_id, trip_headsign from trips.trips where trip_id={trip_id}")
+
+    cur.execute(f'select t.trip_id, t.route_id, t.trip_headsign from "trips.trips" t where trip_id="{trip_id}"')
+    response_row = cur.fetchall()
 
     response = {
         "metadata": {
             "self": f"/public_transport/city/city/trip/{trip_id}",
             "city": city,
             "query_parameters": {
-                "trip_id": "3_14613060"
+                "trip_id": trip_id
             }
+    },
+        "trip_id": trip_id,
+        "route_id": response_row["route_id"],
+        "trip_headsign": response_row["trip_headsign"],\
+        "stops":[]
     }
-    }
-
-    trip = {
-        'trip_id': trip_id,
-        'city': city,
-        'route_id': 'Example route',
-        'departure_time': '2025-04-02T08:30:00Z',
-        'arrival_time': '2025-04-02T09:00:00Z',
-        'status': 'scheduled'
-    }
-    return jsonify({'trip': trip})
+    return jsonify(response)
 
 if __name__ == '__main__':
     app.run(debug=True)
